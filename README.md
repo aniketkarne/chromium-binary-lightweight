@@ -32,7 +32,7 @@ bin/
 
 ```bash
 # Download the binary
-wget https://github.com/aniketkarne/chromium-binary-lightweight/chromium-lambda.zip
+wget https://github.com/aniketkarne/chromium-binary-lightweight/blob/main/chromium-lambda.zip
 
 # Extract
 unzip chromium-lambda.zip
