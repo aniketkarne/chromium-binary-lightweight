@@ -296,8 +296,8 @@ This repository contains pre-compiled Chromium binaries. Chromium is licensed un
 
 ## 🆘 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/chromium-lambda/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/chromium-lambda/discussions)
+- **Issues**: [GitHub Issues](https://github.com/aniketkarne/chromium-binary-lightweight/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/aniketkarne/chromium-binary-lightweight/discussions)
 
 ## 🔖 Version History
 
