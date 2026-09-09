@@ -1,0 +1,38 @@
+# OS / editor cruft
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# macOS resource forks leak out of the published zip
+__MACOSX/
+
+# Local extraction of chromium-lambda.zip (don't commit)
+bin/
+chromium-layer/
+chromium-layer.zip
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.env
+.env.local
+
+# Node (in case anyone wires up tooling here)
+node_modules/
+npm-debug.log*
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
