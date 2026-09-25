@@ -10,6 +10,36 @@ A minimal, optimized Chromium binary and dependencies specifically designed for 
 - **Tested**: Battle-tested in production Lambda environments
 - **Python Compatible**: Works seamlessly with Pyppeteer and Playwright
 
+## 🔍 Build Info
+
+| Field | Value |
+|---|---|
+| Chromium binary build date | 2025-06-27 |
+| Chromium upstream branch | ~137 stable (per build date) |
+| `chromium-lambda.zip` size | 79,991,795 bytes (~76 MiB / ~80 MB) |
+| `chromium-lambda.zip` SHA256 | `0aa08416fd8db475e7157563d8c998e5c2c70e4c168ddfce441879d6973aa58a` |
+
+Verify your download before shipping a Lambda layer:
+
+```bash
+shasum -a 256 chromium-lambda.zip
+# expected: 0aa08416fd8db475e7157563d8c998e5c2c70e4c168ddfce441879d6973aa58a
+```
+
+Then confirm the binary actually launches on your base image:
+
+```bash
+./verify.sh              # runs ./bin/chromium against a data: URL
+./verify.sh path/to.zip  # or point at a specific zip
+```
+
+`verify.sh` exits non-zero with a diagnostic message if the binary fails to
+load libraries, refuses to launch, or doesn't render — safe to wire into CI.
+
+> The Chromium binary is rebuilt manually when needed. If the SHA256 above
+> doesn't match what you downloaded, the zip on `main` was updated — pull
+> again, rebuild your Lambda layer, and re-run `verify.sh`.
+
 ## 📦 Contents
 
 ```
@@ -57,8 +87,8 @@ chmod +x bin/chromium
 import os
 from pyppeteer import launch
 
-# Set Chromium path
-chromium_path = "/path/to/chromium-lambda/bin/chromium"
+# Set Chromium path - points at ./bin/chromium after `unzip chromium-lambda.zip`
+chromium_path = os.path.join(os.path.dirname(__file__), "bin", "chromium")
 
 # Configure for Lambda
 if os.environ.get('AWS_LAMBDA_FUNCTION_NAME'):
@@ -92,8 +122,9 @@ from playwright.async_api import async_playwright
 
 async def main():
     async with async_playwright() as p:
+        # After `unzip chromium-lambda.zip`, the binary lives at ./bin/chromium
         browser = await p.chromium.launch(
-            executable_path="/path/to/chromium-lambda/bin/chromium",
+            executable_path="./bin/chromium",
             args=['--no-sandbox', '--disable-dev-shm-usage']
         )
         page = await browser.new_page()
@@ -232,6 +263,20 @@ args=['--disable-dev-shm-usage', '--disable-gpu']
 
 ## 🧪 Testing
 
+The fastest way to confirm a downloaded zip actually works on your base
+image (Lambda, local Linux, or CI) is the bundled smoke-test script:
+
+```bash
+./verify.sh
+```
+
+It extracts the zip to a temp dir, launches `bin/chromium` against a
+`data:text/html,...` URL in `--headless=new`, and exits non-zero with a
+diagnostic message if the binary fails to load libraries, refuses to
+launch, or doesn't render the expected marker. See [`verify.sh`](./verify.sh).
+
+A manual Python smoke test:
+
 ```python
 import asyncio
 from pyppeteer import launch
@@ -301,7 +346,12 @@ This repository contains pre-compiled Chromium binaries. Chromium is licensed un
 
 ## 🔖 Version History
 
-- **v1.0.0**: Initial release with Chromium 114
+The numbers below describe releases of this repository, not the bundled
+Chromium version. The current binary inside `chromium-lambda.zip` was built
+on **2025-06-27** (Chromium ~137 stable). For build provenance and SHA256,
+see the [🔍 Build Info](#-build-info) section above.
+
+- **v1.0.0**: Initial release. Binary built 2025-06-27 (Chromium ~137 stable).
 - **v1.1.0**: Optimized binary size (-20MB)
 - **v1.2.0**: Added Playwright support
 
