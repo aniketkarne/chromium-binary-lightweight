@@ -1,0 +1,93 @@
+name: smoke
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  binary-smoke:
+    name: Verify chromium-lambda.zip
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show binary provenance
+        run: |
+          echo "file:"
+          file chromium-lambda.zip
+          echo ""
+          echo "size:"
+          stat -c '%n %s bytes' chromium-lambda.zip
+          echo ""
+          echo "sha256:"
+          sha256sum chromium-lambda.zip
+
+      - name: Assert expected entries exist in the zip
+        run: |
+          set -e
+          required=(
+            bin/chromium
+            bin/pyppeteer-install
+            bin/tqdm
+            bin/lib/libexpat.so.1
+            bin/lib/libnss3.so
+            bin/lib/libnssutil3.so
+            bin/lib/libsoftokn3.so
+            bin/lib/libsqlite3.so.0
+            bin/lib/libuuid.so.1
+          )
+          for entry in "${required[@]}"; do
+            if ! unzip -l chromium-lambda.zip | awk '{print $4}' | grep -qx "$entry"; then
+              echo "MISSING from zip: $entry"
+              exit 1
+            fi
+          done
+          echo "All required entries present."
+
+      - name: Extract and verify binary type
+        run: |
+          set -e
+          unzip -q chromium-lambda.zip -d extracted
+          # zip entries do not carry the executable bit on Unix when extracted by
+          # GNU unzip -- set it explicitly so the smoke run below can launch the binary.
+          chmod +x extracted/bin/chromium
+          file extracted/bin/chromium | tee /tmp/chromium-file.txt
+          if ! grep -q 'ELF 64-bit LSB.*x86-64' /tmp/chromium-file.txt; then
+            echo "bin/chromium is not a Linux x86_64 ELF binary -- smoke test cannot continue."
+            exit 1
+          fi
+
+      - name: Launch chromium headless and verify it bootstraps
+        run: |
+          set -e
+          export LD_LIBRARY_PATH="$PWD/extracted/bin/lib:${LD_LIBRARY_PATH:-}"
+          # --dump-dom prints the rendered DOM for the page and exits. A working
+          # Chromium always emits <html>...</html>. If the binary is corrupted,
+          # the loader is missing, or libnss/libexpat can't be resolved, this
+          # either segfaults or hangs and the job times out.
+          output=$(extracted/bin/chromium \
+            --headless=new \
+            --no-sandbox \
+            --disable-gpu \
+            --disable-dev-shm-usage \
+            --single-process \
+            --no-zygote \
+            --dump-dom \
+            about:blank 2>&1)
+          status=$?
+          echo "$output" | tail -n 20
+          if [ "$status" -ne 0 ]; then
+            echo "chromium exited with non-zero status: $status"
+            exit 1
+          fi
+          if ! echo "$output" | grep -q '<html'; then
+            echo "chromium --dump-dom did not return a DOM; binary may be broken."
+            exit 1
+          fi
+          echo "chromium smoke OK."
