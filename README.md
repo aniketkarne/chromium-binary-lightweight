@@ -31,8 +31,11 @@ bin/
 ### Method 1: Direct Download
 
 ```bash
-# Download the binary
-wget https://github.com/aniketkarne/chromium-binary-lightweight/blob/main/chromium-lambda.zip
+# Download the binary (raw URL — the /blob/ URL would download HTML, not the zip)
+wget https://raw.githubusercontent.com/aniketkarne/chromium-binary-lightweight/main/chromium-lambda.zip
+
+# Or with curl
+curl -L -o chromium-lambda.zip https://raw.githubusercontent.com/aniketkarne/chromium-binary-lightweight/main/chromium-lambda.zip
 
 # Extract
 unzip chromium-lambda.zip
@@ -45,7 +48,8 @@ chmod +x bin/chromium
 
 ```bash
 git clone https://github.com/aniketkarne/chromium-binary-lightweight.git
-cd chromium-lambda
+cd chromium-binary-lightweight
+unzip chromium-lambda.zip
 chmod +x bin/chromium
 ```
 
@@ -286,7 +290,11 @@ ninja -C out/Lambda chrome
 
 ## 📄 License
 
-This repository contains pre-compiled Chromium binaries. Chromium is licensed under the BSD license.
+This repository is released under the [BSD 3-Clause License](./LICENSE). The
+`chromium` binary inside `chromium-lambda.zip` is derived from upstream
+Chromium, which is also BSD 3-Clause licensed by The Chromium Authors — see
+https://chromium.googlesource.com/chromium/src/+/main/LICENSE for the
+upstream license text that applies to the binary itself.
 
 ## 🤝 Contributing
 
@@ -301,9 +309,18 @@ This repository contains pre-compiled Chromium binaries. Chromium is licensed un
 
 ## 🔖 Version History
 
-- **v1.0.0**: Initial release with Chromium 114
-- **v1.1.0**: Optimized binary size (-20MB)
-- **v1.2.0**: Added Playwright support
+| Version | Date | Notes |
+|---------|------|-------|
+| v1.0.0  | 2025-06-27 | Initial release. Chromium binary built 2025-06-27 (Chromium 114 series). |
+| v1.1.0  | 2025-07-14 | Trimmed binary size by ~20MB. |
+| v1.2.0  | 2025-07-15 | Documented Playwright usage path. |
+
+> **Heads up — Chromium build date:** the `chromium` binary inside
+> `chromium-lambda.zip` was last built on **2025-06-27**. That's fine for most
+> PDF / scraping workloads, but if you need a recent Chromium (security
+> patches, new headless features, modern JS support) you'll want to rebuild
+> from source — see [Build from Source](#-build-from-source) below. A
+> refreshed prebuilt binary is tracked as a follow-up.
 
 ---
 
