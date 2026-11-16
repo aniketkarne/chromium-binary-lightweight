@@ -1,0 +1,2 @@
+# Prebuilt binary artifact: never diff, never merge textually.
+*.zip binary

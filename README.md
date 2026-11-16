@@ -26,6 +26,12 @@ bin/
 └── tqdm                      # Progress bar utility
 ```
 
+> `pyppeteer-install` and `tqdm` are pip console scripts left over from the
+> build environment. Their `#!/var/lang/bin/python3.11` shebang only exists on
+> the AWS Lambda python3.11 runtime (and its container image), so they won't
+> run anywhere else. The layer actually needs only `bin/chromium` and
+> `bin/lib/`.
+
 ## 🛠 Installation
 
 ### Method 1: Direct Download
@@ -111,9 +117,24 @@ async def main():
 ### Lambda Layer Setup
 
 ```bash
+# Assembles chromium-layer.zip: strips macOS junk, sets the executable bit on
+# bin/chromium, and zips bin/ at the layer root (extracts to /opt/bin/...)
+./build-layer.sh
+```
+
+Doing it by hand works too — but two details bite:
+
+```bash
 # Create layer structure
 mkdir -p chromium-layer/bin
 cp -r bin/* chromium-layer/bin/
+
+# chromium-lambda.zip carries macOS junk (bin/.DS_Store, __MACOSX/) — drop it
+find chromium-layer \( -name '.DS_Store' -o -name '._*' \) -delete
+
+# The zip stores bin/chromium WITHOUT the executable bit. Skip this and every
+# Lambda invocation fails with "Permission denied"
+chmod +x chromium-layer/bin/chromium
 
 # Set library path
 export LD_LIBRARY_PATH="/opt/bin/lib:$LD_LIBRARY_PATH"
